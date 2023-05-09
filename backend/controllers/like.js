@@ -12,7 +12,7 @@ export const getLikes = (req, res) => {
 
 export const addLike = (req, res) => {
   const token = req.cookies.accessToken;
-  if (!token) return res.status(401).json('Вы не зашли в аккаунт');
+  if (!token) return res.status(401).json('Вы не вошли в аккаунт');
 
   jwt.verify(token, 'secretkey', (err, userInfo) => {
     if (err) return res.status(403).json('Неверный токен');
@@ -29,7 +29,7 @@ export const addLike = (req, res) => {
 
 export const deleteLike = (req, res) => {
   const token = req.cookies.accessToken;
-  if (!token) return res.status(401).json('Вы не зашли в аккаунт');
+  if (!token) return res.status(401).json('Вы не вошли в аккаунт');
 
   jwt.verify(token, 'secretkey', (err, userInfo) => {
     if (err) return res.status(403).json('Невалидный токен');

@@ -4,7 +4,7 @@ import moment from 'moment';
 
 export const getStories = (req, res) => {
   const token = req.cookies.accessToken;
-  if (!token) return res.status(401).json('Чтобы выложить историю необходимо войти в аккаунт');
+  if (!token) return res.status(401).json('Чтобы выложить историю войдите в аккаунт');
 
   jwt.verify(token, 'secretkey', (err, userInfo) => {
     if (err) return res.status(403).json('Невалидный токен');
@@ -23,7 +23,7 @@ export const getStories = (req, res) => {
 
 export const addStory = (req, res) => {
   const token = req.cookies.accessToken;
-  if (!token) return res.status(401).json('Вы не зашли в аккаунт');
+  if (!token) return res.status(401).json('Вы не вошли в аккаунт');
 
   jwt.verify(token, 'secretkey', (err, userInfo) => {
     if (err) return res.status(403).json('Невалидный токен!');
@@ -43,7 +43,7 @@ export const deleteStory = (req, res) => {
   if (!token) return res.status(401).json('Чтобы удалить историю необходимо войти в аккаунт');
 
   jwt.verify(token, 'secretkey', (err, userInfo) => {
-    if (err) return res.status(403).json('Token is not valid!');
+    if (err) return res.status(403).json('Невалидный токен');
 
     const q = 'DELETE FROM stories WHERE `id`=? AND `userId` = ?';
 

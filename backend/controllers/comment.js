@@ -4,7 +4,8 @@ import moment from 'moment';
 
 export const getComments = (req, res) => {
   const q = `SELECT c.*, u.id AS userId, name, profilePic FROM comments AS c JOIN users AS u ON (u.id = c.userId)
-    WHERE c.postId = ? ORDER BY c.createdAt DESC`;
+    WHERE c.postId = ? ORDER BY c.createdAt DESC
+    `;
 
   db.query(q, [req.query.postId], (err, data) => {
     if (err) return res.status(500).json(err);
@@ -39,10 +40,10 @@ export const addComment = (req, res) => {
 
 export const deleteComment = (req, res) => {
   const token = req.cookies.access_token;
-  if (!token) return res.status(401).json('Вы не зашли в аккаунт');
+  if (!token) return res.status(401).json('Вы не вошли в аккаунт');
 
   jwt.verify(token, 'jwtkey', (err, userInfo) => {
-    if (err) return res.status(403).json('Неверный токен');
+    if (err) return res.status(403).json('Неверные данные');
 
     const commentId = req.params.id;
     const q = 'DELETE FROM comments WHERE `id` = ? AND `userId` = ?';

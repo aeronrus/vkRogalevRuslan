@@ -14,7 +14,7 @@ export const getUser = (req, res) => {
 
 export const updateUser = (req, res) => {
   const token = req.cookies.accessToken;
-  if (!token) return res.status(401).json('Вы не вошли в аккаунт!');
+  if (!token) return res.status(401).json('Вы не авториозованы!');
 
   jwt.verify(token, 'secretkey', (err, userInfo) => {
     if (err) return res.status(403).json('Невалидный токен');
