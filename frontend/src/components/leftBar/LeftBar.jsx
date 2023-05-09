@@ -14,6 +14,7 @@ import Courses from '../../assets/12.png';
 import Fund from '../../assets/13.png';
 import { AuthContext } from '../../context/authContext';
 import { useContext } from 'react';
+import { Link } from 'react-router-dom';
 
 const LeftBar = () => {
   const { currentUser } = useContext(AuthContext);
@@ -26,67 +27,58 @@ const LeftBar = () => {
             <img src={'/upload/' + currentUser.profilePic} alt="" />
             <span>{currentUser.name}</span>
           </div>
-          <div className="item">
-            <img src={Friends} alt="" />
-            <span>Friends</span>
-          </div>
-          <div className="item">
-            <img src={Groups} alt="" />
-            <span>Groups</span>
-          </div>
-          <div className="item">
-            <img src={Market} alt="" />
-            <span>Marketplace</span>
-          </div>
+          <Link to="/:id/messages">
+            <div className="item">
+              <img src={Messages} alt="" />
+              <span>Сообщения</span>
+            </div>
+          </Link>
+          <Link to="/:id/friends">
+            <div className="item">
+              <img src={Friends} alt="" />
+              <span>Друзья</span>
+            </div>
+          </Link>
+          <Link to="/:id/groups">
+            <div className="item">
+              <img src={Groups} alt="" />
+              <span>Группы</span>
+            </div>
+          </Link>
           <div className="item">
             <img src={Watch} alt="" />
-            <span>Watch</span>
+            <span>Клипы</span>
           </div>
           <div className="item">
             <img src={Memories} alt="" />
-            <span>Memories</span>
+            <span>Закладки</span>
           </div>
         </div>
         <hr />
         <div className="menu">
-          <span>Your shortcuts</span>
+          <span>Ваши заметки</span>
           <div className="item">
             <img src={Events} alt="" />
-            <span>Events</span>
+            <span>События</span>
           </div>
           <div className="item">
             <img src={Gaming} alt="" />
-            <span>Gaming</span>
+            <span>Игры</span>
           </div>
           <div className="item">
             <img src={Gallery} alt="" />
-            <span>Gallery</span>
+            <span>Галерея</span>
           </div>
           <div className="item">
             <img src={Videos} alt="" />
-            <span>Videos</span>
+            <span>Видео</span>
           </div>
           <div className="item">
-            <img src={Messages} alt="" />
-            <span>Messages</span>
+            <img src={Market} alt="" />
+            <span>Магазин</span>
           </div>
         </div>
         <hr />
-        <div className="menu">
-          <span>Others</span>
-          <div className="item">
-            <img src={Fund} alt="" />
-            <span>Fundraiser</span>
-          </div>
-          <div className="item">
-            <img src={Tutorials} alt="" />
-            <span>Tutorials</span>
-          </div>
-          <div className="item">
-            <img src={Courses} alt="" />
-            <span>Courses</span>
-          </div>
-        </div>
       </div>
     </div>
   );
