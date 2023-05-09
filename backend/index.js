@@ -45,6 +45,6 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/likes', likeRoutes);
 app.use('/api/relationships', relationshipRoutes);
 
-app.listen(8800, () => {
+app.listen(7777, () => {
   console.log('API working!');
 });
