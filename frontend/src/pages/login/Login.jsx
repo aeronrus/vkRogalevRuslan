@@ -1,27 +1,27 @@
-import { useContext, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../context/authContext';
-import './login.scss';
+import { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/authContext";
+import "./login.scss";
 
 const Login = () => {
-  const [loginData, setLoginData] = useState({
-    username: '',
-    password: '',
+  const [inputs, setInputs] = useState({
+    username: "",
+    password: "",
   });
   const [err, setErr] = useState(null);
 
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const handleChange = (e) => {
-    setLoginData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
   const { login } = useContext(AuthContext);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await login(loginData);
-      navigate('/');
+      await login(inputs);
+      navigate("/")
     } catch (err) {
       setErr(err.response.data);
     }
@@ -31,27 +31,34 @@ const Login = () => {
     <div className="login">
       <div className="card">
         <div className="left">
-          <h1>RogaleV</h1>
+          <h1>Hello World.</h1>
           <p>
-            Присоединяйтесь к миллионам пользователей, делитесь новостями и наслаждайтесь жизнью.
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero cum,
+            alias totam numquam ipsa exercitationem dignissimos, error nam,
+            consequatur.
           </p>
-          <span>Еще нет аккаунта?</span>
+          <span>Don't you have an account?</span>
           <Link to="/register">
-            <button>Зарегистрироваться</button>
+            <button>Register</button>
           </Link>
         </div>
         <div className="right">
-          <h1>Войти в аккаунт</h1>
+          <h1>Login</h1>
           <form>
             <input
               type="text"
-              placeholder="Имя пользователя"
+              placeholder="Username"
               name="username"
               onChange={handleChange}
             />
-            <input type="password" placeholder="Пароль" name="password" onChange={handleChange} />
+            <input
+              type="password"
+              placeholder="Password"
+              name="password"
+              onChange={handleChange}
+            />
             {err && err}
-            <button onClick={handleLogin}>Войти</button>
+            <button onClick={handleLogin}>Login</button>
           </form>
         </div>
       </div>

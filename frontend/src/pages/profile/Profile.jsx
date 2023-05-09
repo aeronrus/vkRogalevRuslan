@@ -44,7 +44,6 @@ const Profile = () => {
     },
     {
       onSuccess: () => {
-        // Invalidate and refetch
         queryClient.invalidateQueries(['relationship']);
       },
     },

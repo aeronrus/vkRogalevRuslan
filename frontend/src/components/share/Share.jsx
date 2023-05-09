@@ -1,20 +1,20 @@
-import './share.scss';
-import Image from '../../assets/img.png';
-import Map from '../../assets/map.png';
-import Friend from '../../assets/friend.png';
-import { useContext, useState } from 'react';
-import { AuthContext } from '../../context/authContext';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { makeRequest } from '../../axios';
+import "./share.scss";
+import Image from "../../assets/img.png";
+import Map from "../../assets/map.png";
+import Friend from "../../assets/friend.png";
+import { useContext, useState } from "react";
+import { AuthContext } from "../../context/authContext";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { makeRequest } from "../../axios";
 const Share = () => {
   const [file, setFile] = useState(null);
-  const [desc, setDesc] = useState('');
+  const [desc, setDesc] = useState("");
 
   const upload = async () => {
     try {
       const formData = new FormData();
-      formData.append('file', file);
-      const res = await makeRequest.post('/upload', formData);
+      formData.append("file", file);
+      const res = await makeRequest.post("/upload", formData);
       return res.data;
     } catch (err) {
       console.log(err);
@@ -27,22 +27,22 @@ const Share = () => {
 
   const mutation = useMutation(
     (newPost) => {
-      return makeRequest.post('/posts', newPost);
+      return makeRequest.post("/posts", newPost);
     },
     {
       onSuccess: () => {
         // Invalidate and refetch
-        queryClient.invalidateQueries(['posts']);
+        queryClient.invalidateQueries(["posts"]);
       },
-    },
+    }
   );
 
   const handleClick = async (e) => {
     e.preventDefault();
-    let imgUrl = '';
+    let imgUrl = "";
     if (file) imgUrl = await upload();
     mutation.mutate({ desc, img: imgUrl });
-    setDesc('');
+    setDesc("");
     setFile(null);
   };
 
@@ -51,7 +51,7 @@ const Share = () => {
       <div className="container">
         <div className="top">
           <div className="left">
-            <img src={'/upload/' + currentUser.profilePic} alt="" />
+            <img src={"/upload/" + currentUser.profilePic} alt="" />
             <input
               type="text"
               placeholder={`What's on your mind ${currentUser.name}?`}
@@ -60,7 +60,9 @@ const Share = () => {
             />
           </div>
           <div className="right">
-            {file && <img className="file" alt="" src={URL.createObjectURL(file)} />}
+            {file && (
+              <img className="file" alt="" src={URL.createObjectURL(file)} />
+            )}
           </div>
         </div>
         <hr />
@@ -69,7 +71,7 @@ const Share = () => {
             <input
               type="file"
               id="file"
-              style={{ display: 'none' }}
+              style={{ display: "none" }}
               onChange={(e) => setFile(e.target.files[0])}
             />
             <label htmlFor="file">
