@@ -1,7 +1,5 @@
 import './share.scss';
 import Image from '../../assets/img.png';
-import Map from '../../assets/map.png';
-import Friend from '../../assets/friend.png';
 import { useContext, useState } from 'react';
 import { AuthContext } from '../../context/authContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -10,7 +8,7 @@ const Share = () => {
   const [file, setFile] = useState(null);
   const [desc, setDesc] = useState('');
 
-  const upload = async () => {
+  const loadImg = async () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -39,7 +37,7 @@ const Share = () => {
   const handleClick = async (e) => {
     e.preventDefault();
     let imgUrl = '';
-    if (file) imgUrl = await upload();
+    if (file) imgUrl = await loadImg();
     mutation.mutate({ desc, img: imgUrl });
     setDesc('');
     setFile(null);

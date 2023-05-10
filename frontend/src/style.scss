@@ -2,7 +2,7 @@ $themes: (
   light: (
     textColor: #000,
     bg: white,
-    logo: darkblue,
+    logo: rgb(10, 239, 63),
     bgSoft: #f6f3f3,
     textColorSoft: #555,
     border: lightgray,
@@ -22,7 +22,7 @@ $themes: (
     .theme-#{$theme} & {
       $theme-map: () !global;
       @each $key, $submap in $map {
-        $value: map-get(map-get($themes, $theme), "#{$key}");
+        $value: map-get(map-get($themes, $theme), '#{$key}');
         $theme-map: map-merge(
           $theme-map,
           (
@@ -49,4 +49,8 @@ $themes: (
   @media (max-width: 960px) {
     @content;
   }
+}
+.links {
+  text-decoration: none;
+  color: inherit;
 }

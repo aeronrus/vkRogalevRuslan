@@ -27,19 +27,19 @@ const LeftBar = () => {
             <img src={'/upload/' + currentUser.profilePic} alt="" />
             <span>{currentUser.name}</span>
           </div>
-          <Link to="/:id/messages">
+          <Link to="/:id/messages" className="links">
             <div className="item">
               <img src={Messages} alt="" />
               <span>Сообщения</span>
             </div>
           </Link>
-          <Link to="/:id/friends">
+          <Link to="/:id/friends" className="links">
             <div className="item">
               <img src={Friends} alt="" />
               <span>Друзья</span>
             </div>
           </Link>
-          <Link to="/:id/groups">
+          <Link to="/:id/groups" className="links">
             <div className="item">
               <img src={Groups} alt="" />
               <span>Группы</span>

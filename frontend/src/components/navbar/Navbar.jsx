@@ -19,7 +19,7 @@ const Navbar = () => {
   return (
     <div className="navbar">
       <div className="left">
-        <Link to="/profile" style={{ textDecoration: 'none' }}>
+        <Link to="/" className="links">
           <span>RogaleV</span>
         </Link>
         <HomeOutlinedIcon />
@@ -35,13 +35,18 @@ const Navbar = () => {
         </div>
       </div>
       <div className="right">
-        <PersonOutlinedIcon />
+        <Link to={`/profile/${currentUser.id}`} className="links">
+          {' '}
+          <PersonOutlinedIcon />
+        </Link>
+
         <EmailOutlinedIcon />
-        <NotificationsOutlinedIcon />
-        <div className="user">
-          <img src={'/upload/' + currentUser.profilePic} alt="фото профиля" />
-          <span>{currentUser.name}</span>
-        </div>
+        <Link to={`/profile/${currentUser.id}`} className="links">
+          <div className="user">
+            <img src={'/upload/' + currentUser.profilePic} alt="фото профиля" />
+            <span>{currentUser.name}</span>
+          </div>
+        </Link>
       </div>
     </div>
   );
