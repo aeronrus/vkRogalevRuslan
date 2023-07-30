@@ -1,36 +1,37 @@
 import './post.scss';
+import React, { useContext, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
-import FavoriteOutlinedIcon from '@mui/icons-material/FavoriteOutlined';
-import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
-import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import { Link } from 'react-router-dom';
-import Comments from '../comments/Comments';
-import { useState } from 'react';
-import moment from 'moment';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { makeRequest } from '../../axios';
-import { useContext } from 'react';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteOutlined';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import ShareIcon from '@mui/icons-material/Share';
 import { AuthContext } from '../../context/authContext';
+import Comments from '../comments/Comments';
+import moment from 'moment';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { addRequest } from '../../axios';
 
 const Post = ({ post }) => {
-  const [commentOpen, setCommentOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-
   const { currentUser } = useContext(AuthContext);
+  const [commentOpen, setCommentOpen] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
 
-  const { isLoading, error, data } = useQuery(['likes', post.id], () =>
-    makeRequest.get('/likes?postId=' + post.id).then((res) => {
-      return res.data;
-    }),
+  const { isLoading, isError, data } = useQuery(
+    ['likes', post.id],
+    () =>
+      addRequest.get('/likes?postId=' + post.id).then((res) => {
+        return res.data;
+      }),
+    { refetchOnWindowFocus: false },
   );
 
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
     (liked) => {
-      if (liked) return makeRequest.delete('/likes?postId=' + post.id);
-      return makeRequest.post('/likes', { postId: post.id });
+      if (liked) return addRequest.delete('/likes?postId=' + post.id);
+      return addRequest.post('/likes', { postId: post.id });
     },
     {
       onSuccess: () => {
@@ -38,9 +39,10 @@ const Post = ({ post }) => {
       },
     },
   );
+
   const deleteMutation = useMutation(
     (postId) => {
-      return makeRequest.delete('/posts/' + postId);
+      return addRequest.delete('/posts/' + postId);
     },
     {
       onSuccess: () => {
@@ -50,7 +52,7 @@ const Post = ({ post }) => {
   );
 
   const handleLike = () => {
-    mutation.mutate(data.includes(currentUser.id));
+    mutation.mutate(data?.includes(currentUser.id));
   };
 
   const handleDelete = () => {
@@ -62,49 +64,43 @@ const Post = ({ post }) => {
       <div className="container">
         <div className="user">
           <div className="userInfo">
-            <img src={'/upload/' + post.profilePic} alt="" />
+            <img src={post.profilePic} alt="" />
             <div className="details">
-              <Link
-                to={`/profile/${post.userId}`}
-                style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Link to={`/profile/${post.userId}`} className="links">
                 <span className="name">{post.name}</span>
               </Link>
-              <span className="date">{moment(post.createdAt).fromNow()}</span>
+              <span className="date">{post.createdAt?.fromNow()}</span>
             </div>
           </div>
-          <MoreHorizIcon onClick={() => setMenuOpen(!menuOpen)} />
-          {menuOpen && post.userId === currentUser.id && (
-            <button onClick={handleDelete}>Удалить</button>
-          )}
+          <DeleteOutlineIconf onClick={handleDelete} />
         </div>
         <div className="content">
           <p>{post.desc}</p>
-          <img src={'/upload/' + post.img} alt="" />
+          <img src={'./upload' + post.img} alt="не открылось" />
         </div>
         <div className="info">
           <div className="item">
             {isLoading ? (
               'loading'
-            ) : data.includes(currentUser.id) ? (
-              <FavoriteOutlinedIcon style={{ color: 'red' }} onClick={handleLike} />
+            ) : data?.includes(currentUser.id) ? (
+              <FavoriteBorderIcon onClick={handleLike} style={{ color: 'red' }} />
             ) : (
               <FavoriteBorderOutlinedIcon onClick={handleLike} />
             )}
-            {data?.length} Likes
+            <span>{data?.length} likes</span>
           </div>
-          <div className="item" onClick={() => setCommentOpen(!commentOpen)}>
-            <TextsmsOutlinedIcon />
+          <div onClick={() => setCommentOpen(!commentOpen)} className="item">
+            <ChatBubbleOutlineIcon />
             Коментарии
           </div>
           <div className="item">
-            <ShareOutlinedIcon />
+            <ShareIcon />
             Поделиться
           </div>
         </div>
-        {commentOpen && <Comments postId={post.id} />}
+        <div className="comments">{commentOpen && <Comments postId={post.id} />}</div>
       </div>
     </div>
   );
 };
-
 export default Post;

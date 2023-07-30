@@ -19,7 +19,7 @@ const Navbar = () => {
   return (
     <div className="navbar">
       <div className="left">
-        <Link to="/" className="links">
+        <Link style={{ textDecoration: 'none' }} className="link" to="/">
           <span>RogaleV</span>
         </Link>
         <HomeOutlinedIcon />

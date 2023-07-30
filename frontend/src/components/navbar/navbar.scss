@@ -1,83 +1,79 @@
-@import "../../style.scss";
+@import '../../style.scss';
 
 .navbar {
-  @include themify($themes) {
+  background-color: var(--bg);
+  position: sticky;
+  z-index: 999;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  height: 50px;
+  color: var(--textColor);
+  border-bottom: 1px solid var(--border);
+
+  :nth-child(n) {
+    cursor: pointer;
+  }
+  .left {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 10px 20px;
-    height: 50px;
-    border-bottom: 1px solid themed("border");
-    position: sticky;
-    top: 0;
-    background-color: themed("bg");
-    color:themed("textColor");
-    z-index: 999;
-
-    .left {
+    gap: 30px;
+    .link {
+      text-decoration: none;
+      span {
+      }
+    }
+    .search {
       display: flex;
       align-items: center;
-      gap: 30px;
-
-      span {
-        font-weight: bold;
-        font-size: 20px;
-        color: themed("logo");
-      }
-
-      .search {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        border: 1px solid themed("border");
-        border-radius: 5px;
-        padding: 5px;
-
-        input {
-          border: none;
-          width: 500px;
-          background-color: transparent;
-          color: themed("textColor");
-
-          @include mobile{
-            display: none;
-          }
-
-          @include tablet{
-            width: 200px;
-          }
+      border: 1px solid var(--border);
+      gap: 10px;
+      border-radius: 5px;
+      padding: 5px;
+      input {
+        border: none;
+        width: 500px;
+        background-color: transparent;
+        color: var(--textColor);
+        @include mobile {
+          display: none;
+        }
+        @include tablet {
+          width: 200px;
         }
       }
     }
-
-    .right {
+    span {
+      font-weight: bold;
+      font-size: 20px;
+      color: var(--logo);
+    }
+  }
+  .right {
+    @include mobile {
+      display: none;
+    }
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    padding: 10px;
+    .user {
       display: flex;
       align-items: center;
-      gap: 20px;
-
-      @include mobile{
+      gap: 10px;
+      font-weight: 500;
+      @include tablet {
         display: none;
       }
-
-      .user {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: 500;
-
-        @include tablet{
-          display: none;
-        }
-
-        img {
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          object-fit: cover;
-        }
-
-        span {
-        }
+      img {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      span {
       }
     }
   }

@@ -1,56 +1,57 @@
-$themes: (
-  light: (
-    textColor: #000,
-    bg: white,
-    logo: rgb(10, 239, 63),
-    bgSoft: #f6f3f3,
-    textColorSoft: #555,
-    border: lightgray,
-  ),
-  dark: (
-    textColor: whitesmoke,
-    bg: #222,
-    logo: white,
-    bgSoft: #333,
-    textColorSoft: lightgray,
-    border: #444,
-  ),
-);
-
-@mixin themify($themes) {
-  @each $theme, $map in $themes {
-    .theme-#{$theme} & {
-      $theme-map: () !global;
-      @each $key, $submap in $map {
-        $value: map-get(map-get($themes, $theme), '#{$key}');
-        $theme-map: map-merge(
-          $theme-map,
-          (
-            $key: $value,
-          )
-        ) !global;
-      }
-      @content;
-      $theme-map: null !global;
-    }
-  }
+html[data-theme='light'] {
+  --textColor: #000;
+  --bg: rgb(245, 245, 245);
+  --bgLeft: rgb(181, 151, 246);
+  --logo: #551a8b;
+  --bgSoft: #f6f3f3;
+  --textColorSoft: #555;
+  --border: orange;
+  --bgPost: #d5d5d5;
 }
 
-@function themed($key) {
-  @return map-get($theme-map, $key);
+html[data-theme='dark'] {
+  --textColor: #faf7f7;
+  --bg: #222;
+  --bgLeft: rgb(57, 43, 87);
+  --logo: #f7f5f9;
+  --bgSoft: #333;
+  --textColorSoft: #555;
+  --border: rgb(91, 61, 4);
+  --bgPost: #282739;
+}
+
+@mixin add-button {
+  border: none;
+  padding: 5px;
+  color: white;
+  cursor: pointer;
+  background-color: #5271ff;
+}
+
+.add-button {
+  @include add-button;
+}
+
+@mixin delete-button {
+  border: none;
+  padding: 5px;
+  color: white;
+  cursor: pointer;
+  background-color: #e31919;
+}
+
+.delete-button {
+  @include delete-button;
 }
 
 @mixin mobile {
-  @media (max-width: 480px) {
+  @media (max-width: 500px) {
     @content;
   }
 }
+
 @mixin tablet {
-  @media (max-width: 960px) {
+  @media (max-width: 910px) {
     @content;
   }
-}
-.links {
-  text-decoration: none;
-  color: inherit;
 }
