@@ -1,5 +1,4 @@
 import express from 'express';
-const app = express();
 import userRoutes from './routes/users.js';
 import authRoutes from './routes/auth.js';
 import postsRoutes from './routes/posts.js';
@@ -9,6 +8,8 @@ import friendsRoutes from './routes/friends.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
+
+const app = express();
 
 app.use(express.json());
 app.use((req, res, next) => {

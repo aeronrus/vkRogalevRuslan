@@ -1,47 +1,60 @@
 //сначала регитрация, потом логин!!!
-
 import { db } from '../connect.js';
 import bcrypt from 'bcryptjs'; //библиотека нужна нам для генерации хэша пароля
 import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
 
 export const login = (req, res) => {
-  const q = 'SELECT * FROM users WHERE username = ?'; // Создается переменная q, которая содержит SQL-запрос для выборки всех данных о пользователе из таблицы users,
-  //где имя пользователя равно введенному в запросе.
+  const q = 'SELECT * FROM users WHERE username = ?';
 
   db.query(q, [req.body.username], (err, data) => {
-    // Выполняется запрос к базе данных db.query, в котором передается переменная q и значение req.body.username (имя пользователя из тела запроса).
-    if (err) return res.status(500).json(err); // если ошибка, статус 500 //В случае ошибки возвращается статус 500 и ошибка в формате JSON.
-    //Данный код представляет собой функцию login, которая обрабатывает POST-запрос на авторизацию пользователя.
+    if (err) return res.status(500).json(err);
 
-    //data-результат поиска данных о пользователе в таблице users
-    // Если длина ответа не равна 0, то значит, что пользователь с таким именем уже зарегистрирован в базе данных
-    if (data.length === 0) return res.status(404).json('User not found'); //если длина ответа 0, то пользователя нет в нашей таблице(не зарегистрирован)
+    if (data.length === 0) return res.status(404).json('User not found');
 
-    const comparePassword = bcrypt.compareSync(req.body.password, data[0].password); //Этот код сравнивает введенный пользователем пароль (из POST-запроса) с хешированным паролем,
-    // хранящимся в базе данных для соответствующего пользователя. Для сравнения используется метод compareSync из библиотеки bcrypt,
-    // который сравнивает две строки (в данном случае, пароль и хеш) и возвращает булевое значение - true, если строки совпадают, и false, если нет.
+    const comparePassword = bcrypt.compareSync(req.body.password, data[0].password);
 
-    if (!comparePassword) return res.status(400).json('Incorrect data'); //переменная comparePassword=false, значит, пользователь ввел неверный пароль
+    if (!comparePassword) return res.status(401).json('Неверный логин или пароль');
 
-    // Если пользователь авторизован успешно, то создается токен с помощью библиотеки jsonwebtoke*
-    const token = jwt.sign({ id: data[0].id }, 'secretkey'); //если пользователь есть в таблице, то берем ID пользователя из базы данных,
-    //засовываем в крипто-функцию и получаем токен, который потом отдаем клиенту
+    const accessToken = jwt.sign({ id: data[0].id }, 'accessSecret', { expiresIn: '1m' });
+    const refreshToken = jwt.sign({ id: data[0].id }, 'refreshSecret', { expiresIn: '5m' });
 
-    // Создается объект others, который содержит все данные о пользователе, кроме его пароля
     const { password, ...others } = data[0];
 
+    const q2 = 'UPDATE users SET refreshToken = ? WHERE id = ?';
+    db.query(q2, [refreshToken, data[0].id], (err2, data2) => {
+      if (err2) return res.status(500).json(err2);
+      console.log(result);
+    });
+
     res
-      // Результат авторизации (данные о пользователе) сохраняются в куки с помощью метода .cookie() и возвращаются в формате JSON с кодом статуса 200.
-      .cookie('accessToken', token, {
-        httpOnly: true, //закидываем в куки, доступ к которым есть только через сервер, а через JS к ним доступа нет
-      })
+      .cookie('accessToken', accessToken, { httpOnly: true })
+      .cookie('refreshToken', refreshToken, { maxAge: 6 * 24 * 60 * 60 * 1000 }, { httpOnly: true })
       .status(200)
       .json(others);
   });
 };
 
+export const refresh = (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) return res.status(401).json('Вы не авторизованы');
+  const q = 'SELECT * FROM user WHERE refreshToken = ?';
+  db.query(q, [refreshToken], (err, data) => {
+    if (err) return res.status(500).json('Ошибка на сервере');
+
+    if (data.length === 0) return res.status(401).json('Вы не авторизованы');
+
+    jwt.verify(refreshToken, 'refreshSecret', (err, decoded) => {
+      if (err) return res.status(403).json('Invalid token');
+      const accessToken = jwt.sign({ id: decoded.id }, 'accessSecret', { expiresIn: '10m' });
+      res.cookie('accessToken', accessToken, { httpOnly: true }.status(200).json({ accessToken }));
+    });
+  });
+};
+
 export const register = (req, res) => {
-  const q = 'SELECT * FROM users WHERE username = ?'; //выборка из таблицы пользователя с введенными именем(еть или нет)
+  const q = 'SELECT * FROM users WHERE username = ?'; //выборка из таблицы пользователя с введенными именем(еcть или нет)
   db.query(q, [req.body.username], (err, data) => {
     if (err) return res.status(500).json(err);
     if (data.length) return res.status(409).json('User already registered');
@@ -62,6 +75,14 @@ export const register = (req, res) => {
       return res.status(200).json('User has been registered'); //обработка результата
     });
   });
+};
+
+export const activate = async (req, res) => {
+  try {
+    const activeLink = uuid.v4();
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 export const logout = (req, res) => {
