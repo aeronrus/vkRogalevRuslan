@@ -8,6 +8,9 @@ import friendsRoutes from './routes/friends.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
+//import 'dotenv/config';
+
+const PORT = process.env.PORT ?? 9999;
 
 const app = express();
 
@@ -46,6 +49,6 @@ app.use('/backend/comments', commentsRoutes);
 app.use('/backend/likes', likesRoutes);
 app.use('/backend/friends', friendsRoutes);
 
-app.listen(9999, () => {
-  console.log('working!');
+app.listen(PORT, () => {
+  console.log('working!', PORT);
 });

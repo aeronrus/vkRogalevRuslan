@@ -1,38 +1,44 @@
-//сначала регитрация, потом логин!!!
 import { db } from '../connect.js';
 import bcrypt from 'bcryptjs'; //библиотека нужна нам для генерации хэша пароля
 import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
+import { ApiError } from '../errorHandlers/api-error.js';
 
-export const login = (req, res) => {
-  const q = 'SELECT * FROM users WHERE username = ?';
+export const login = async (req, res) => {
+  try {
+    const q = 'SELECT * FROM users WHERE username = ?';
+    await db.query(q, [req.body.username], (err, data) => {
+      if (err) return res.json(ApiError.ServerErrors('Ошибка с бд'));
+      if (data.length === 0)
+        return res.json(ApiError.UnathorizedError('Пользователь с таким именем не найден'));
+      const comparePassword = bcrypt.compareSync(req.body.password, data[0].password);
 
-  db.query(q, [req.body.username], (err, data) => {
-    if (err) return res.status(500).json(err);
+      if (!comparePassword) return res.json(ApiError.UnathorizedError('Неверный логин или пароль'));
 
-    if (data.length === 0) return res.status(404).json('User not found');
+      const accessToken = jwt.sign({ id: data[0].id }, 'access', { expiresIn: '1m' });
+      const refreshToken = jwt.sign({ id: data[0].id }, 'refresh', { expiresIn: '5m' });
 
-    const comparePassword = bcrypt.compareSync(req.body.password, data[0].password);
+      const { password, ...others } = data[0];
 
-    if (!comparePassword) return res.status(401).json('Неверный логин или пароль');
+      const q2 = 'UPDATE users SET refreshToken = ? WHERE id = ?';
+      db.query(q2, [refreshToken, data[0].id], (err2, data2) => {
+        if (err2) return res.status(500).json(err2);
+        //console.log(result);
+      });
 
-    const accessToken = jwt.sign({ id: data[0].id }, 'accessSecret', { expiresIn: '1m' });
-    const refreshToken = jwt.sign({ id: data[0].id }, 'refreshSecret', { expiresIn: '5m' });
-
-    const { password, ...others } = data[0];
-
-    const q2 = 'UPDATE users SET refreshToken = ? WHERE id = ?';
-    db.query(q2, [refreshToken, data[0].id], (err2, data2) => {
-      if (err2) return res.status(500).json(err2);
-      console.log(result);
+      res
+        .cookie('accessToken', accessToken, { httpOnly: true })
+        .cookie(
+          'refreshToken',
+          refreshToken,
+          { maxAge: 6 * 24 * 60 * 60 * 1000 },
+          { httpOnly: true },
+        )
+        .status(200)
+        .json(others);
     });
-
-    res
-      .cookie('accessToken', accessToken, { httpOnly: true })
-      .cookie('refreshToken', refreshToken, { maxAge: 6 * 24 * 60 * 60 * 1000 }, { httpOnly: true })
-      .status(200)
-      .json(others);
-  });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const refresh = (req, res) => {
@@ -53,45 +59,40 @@ export const refresh = (req, res) => {
   });
 };
 
-export const register = (req, res) => {
-  const q = 'SELECT * FROM users WHERE username = ?'; //выборка из таблицы пользователя с введенными именем(еcть или нет)
-  db.query(q, [req.body.username], (err, data) => {
-    if (err) return res.status(500).json(err);
-    if (data.length) return res.status(409).json('User already registered');
-    //если длина ответа не 0(ответ есть), значит имя пользователя есть в нашей таблице users и пользователь уже зарегистрирован
-
-    const salt = bcrypt.genSaltSync(10); //используя библиотеку bcrypt, генерируем соль = случайная строка из 10 символов(доп функция, чтобы понизить вероятность коллизий)
-    const hashedPassword = bcrypt.hashSync(req.body.password, salt); //используя метод hashSync хэшируем пароль, перед этим добавив
-    // соль к нашему паролю и прокидываем это все в криптографическую функцию
-
-    //хэширование пароля делает его более безопасным, тк хэш нельзя преобразовать обратно в оригинальный пароль.
-    //при проверке пароля(на логине) мы будем хешировать введенный пароль  той же солью и сравнивать полученный результат(хеш) с сохраненным паролем в бд
-
-    const q = 'INSERT INTO users(`username`,`email`,`password`, `name`) VALUE(?)'; //вставь в таблицу users мои данные с фронтенда
-
-    const values = [req.body.username, req.body.email, hashedPassword, req.body.name]; //данные из запроса, все из body, тк post-запрос + hashedPassword(наш захешированный пароль с солью)
-    db.query(q, [values], (err, data) => {
-      if (err) return res.status(500).json(err);
-      return res.status(200).json('User has been registered'); //обработка результата
-    });
-  });
-};
-
-export const activate = async (req, res) => {
+export const register = async (req, res) => {
   try {
-    const activeLink = uuid.v4();
+    const q = 'SELECT * FROM users WHERE username = ?';
+    await db.query(q, [req.body.username], (err, data) => {
+      if (err) return res.json(ApiError.ServerErrors());
+      if (data.length)
+        return res.json(ApiError.UnathorizedError('User with this username already registered'));
+
+      const salt = bcrypt.genSaltSync(10);
+      const hashedPassword = bcrypt.hashSync(req.body.password, salt);
+
+      const q = 'INSERT INTO users(`username`,`email`,`password`, `name`) VALUE(?)';
+
+      const values = [req.body.username, req.body.email, hashedPassword, req.body.name];
+      db.query(q, [values], (err, data) => {
+        if (err) return res.json(ApiError.ServerErrors());
+        return res.status(200).json('User has been registered');
+      });
+    });
   } catch (error) {
-    console.log(error);
+    next(error);
   }
 };
 
 export const logout = (req, res) => {
-  res
-    .clearCookie('accessToken', {
-      //чистим cookie
-      secure: true,
-      sameSite: 'none',
-    })
-    .status(200)
-    .json('User has been logged out'); //ответ, что пользователь вышел
+  try {
+    res
+      .clearCookie('accessToken', {
+        secure: true,
+        sameSite: 'none',
+      })
+      .status(200)
+      .json('User has been logged out');
+  } catch (error) {
+    next(error);
+  }
 };
