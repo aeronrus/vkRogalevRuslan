@@ -3,6 +3,9 @@ import bcrypt from 'bcryptjs'; //библиотека нужна нам для �
 import jwt from 'jsonwebtoken';
 import { ApiError } from '../errorHandlers/api-error.js';
 import uuid from 'uuid';
+import userDto from '../dtos/user-dto.js';
+import tokenService from './tokenService.js';
+import 'dotenv/config';
 
 const AuthService = {
   async registration(username, email, password, name) {
@@ -13,7 +16,6 @@ const AuthService = {
       if (candidate.length) return console.log('User already exists!');
       const salt = bcrypt.genSaltSync(10);
       const hashedPassword = bcrypt.hashSync(password, salt);
-
       const activationLink = uuid.v4();
 
       const q =
@@ -21,12 +23,20 @@ const AuthService = {
 
       const values = [username, email, hashedPassword, name, activationLink];
 
-      db.query(q, [values], (err, user) => {
+      db.query(q, [values], async (err, user) => {
+        //узнать что возвращает user, чтобы прокинуть его в userDto и получить объект с данными
         if (err) console.log('500' + err);
-        return user;
+        await tokenService.sendActivationMail(
+          email,
+          `${process.env.API_URL}/api/activate/${activationLink}`,
+        );
+        const UserDto = new userDto(user);
+        const tokens = tokenService.generateToken({ ...UserDto });
+        await tokenService.saveToken(UserDto.id, tokens.refreshToken); //как сделать await
+        return { ...tokens, user: UserDto };
       });
     });
   },
 };
 
-export default UserService;
+export default AuthService;

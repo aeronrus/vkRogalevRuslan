@@ -62,8 +62,15 @@ export const refresh = (req, res) => {
 
 export const register = async (req, res) => {
   const { username, email, password, name } = req.body;
-  await AuthService.registration(username, email, password, name);
-  return res.status(200).json('user has been created');
+  const data = await AuthService.registration(username, email, password, name);
+  return res
+    .cockie('refreshToken', data.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 10 * 24 * 60 * 60 * 1000,
+    })
+    .status(200)
+    .json('user has been created');
 };
 
 export const logout = (req, res) => {
@@ -79,3 +86,5 @@ export const logout = (req, res) => {
     next(error);
   }
 };
+
+export const ativate = async (req, res) => {};
