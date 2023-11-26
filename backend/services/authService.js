@@ -37,6 +37,20 @@ const AuthService = {
       });
     });
   },
+  async activate(activationLink) {
+    const q = 'SELECT * FROM users WHERE activavationLink = ?'; //какой корректный запрос
+    db.query(q, activationLink, (err, user) => {
+      if (err) console.log('500 Ошибка бд: Поиск польователя по сылке ' + err);
+      if (!user) {
+        console.log('Пользователь передал неккоректную ссылку для активации');
+      }
+      const q = 'UPDATE users SET `refreshToken`=? WHERE activavationLink=?'; //можем ли мы искать не по id, а по другим полям
+      const values = [true, activationLink];
+      db.query(q, [values], (err, data) => {
+        if (err) console.log('500 Ошибка бд: Не смог добавить поле true у isActivated' + err);
+      });
+    });
+  },
 };
 
 export default AuthService;

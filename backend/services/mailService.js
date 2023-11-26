@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 class mailService {
   constructor() {
     this.transporter = nodemailer.createTransport({

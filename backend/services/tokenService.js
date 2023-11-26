@@ -13,7 +13,7 @@ const tokenService = {
     const q = 'SELECT * FROM tokens WHERE user=?';
     db.query(q, userId, (err, tokenData) => {
       if (tokenData) {
-        const q = 'UPDATE tokens SET `refreshToken`=? WHERE user=?';
+        const q = 'UPDATE tokens SET `refreshToken`=? WHERE user=?'; //проверить правильность запроса
 
         const values = [refreshToken, userId];
         db.query(q, [values], (err, token) => {
@@ -34,7 +34,7 @@ const tokenService = {
 
   async removeToken(userId) {
     //возможно искать токен через refreshToken, а не через userId
-    const q = 'DELETE FROM tokens WHERE `user` = ? ';
+    const q = 'DELETE FROM tokens WHERE user = ? ';
     db.query(q, userId, (err, data) => {
       if (err) console.log('500' + err);
       console.log('User has been created.');
