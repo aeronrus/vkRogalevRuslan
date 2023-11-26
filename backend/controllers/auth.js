@@ -2,6 +2,7 @@ import { db } from '../connect.js';
 import bcrypt from 'bcryptjs'; //библиотека нужна нам для генерации хэша пароля
 import jwt from 'jsonwebtoken';
 import { ApiError } from '../errorHandlers/api-error.js';
+import { AuthService } from '../services/authService.js';
 
 export const login = async (req, res) => {
   try {
@@ -60,27 +61,9 @@ export const refresh = (req, res) => {
 };
 
 export const register = async (req, res) => {
-  try {
-    const q = 'SELECT * FROM users WHERE username = ?';
-    await db.query(q, [req.body.username], (err, data) => {
-      if (err) return res.json(ApiError.ServerErrors());
-      if (data.length)
-        return res.json(ApiError.UnathorizedError('User with this username already registered'));
-
-      const salt = bcrypt.genSaltSync(10);
-      const hashedPassword = bcrypt.hashSync(req.body.password, salt);
-
-      const q = 'INSERT INTO users(`username`,`email`,`password`, `name`) VALUE(?)';
-
-      const values = [req.body.username, req.body.email, hashedPassword, req.body.name];
-      db.query(q, [values], (err, data) => {
-        if (err) return res.json(ApiError.ServerErrors());
-        return res.status(200).json('User has been registered');
-      });
-    });
-  } catch (error) {
-    next(error);
-  }
+  const { username, email, password, name } = req.body;
+  await AuthService.registration(username, email, password, name);
+  return res.status(200).json('user has been created');
 };
 
 export const logout = (req, res) => {
