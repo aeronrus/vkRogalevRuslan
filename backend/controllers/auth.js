@@ -44,24 +44,6 @@ export const refresh = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     const userData = await AuthService.refresh(refreshToken);
-
-    if (!refreshToken) return res.status(401).json('Вы не авторизованы');
-    const q = 'SELECT * FROM user WHERE refreshToken = ?';
-    db.query(q, [refreshToken], (err, data) => {
-      if (err) return res.status(500).json('Ошибка на сервере');
-
-      if (data.length === 0) return res.status(401).json('Вы не авторизованы');
-
-      jwt.verify(refreshToken, 'refreshSecret', (err, decoded) => {
-        if (err) return res.status(403).json('Invalid token');
-        const accessToken = jwt.sign({ id: decoded.id }, 'accessSecret', { expiresIn: '10m' });
-        res.cookie(
-          'accessToken',
-          accessToken,
-          { httpOnly: true }.status(200).json({ accessToken }),
-        );
-      });
-    });
     return res
       .cockie('refreshToken', userData.refreshToken, {
         httpOnly: true,

@@ -75,6 +75,29 @@ const AuthService = {
     const data = await tokenService.removeToken(refreshToken);
     return data;
   },
+
+  async refresh(refreshToken) {
+    if (!refreshToken) {
+      throw ApiError.UnathorizedError('You are not authorizated');
+    }
+    const userData = tokenService.validateRefreshToken(refreshToken);
+    const tokenFromDb = tokenService.findToken(refreshToken);
+
+    if (userData && tokenFromDb) {
+      const q = 'SELECT * FROM user WHERE id = ?';
+      db.query(q, [tokenFromDb.id], (err, user) => {
+        if (err) throw ApiError.ServerErrors('Don`t find user by token in db');
+        //уточнить tokenFromDb или userData(тк в userData навряд ли содержится id)
+        if (user.length === 0) throw ApiError('Don`t find user with this token');
+
+        const UserDto = new userDto(user);
+        const tokens = tokenService.generateToken({ ...UserDto });
+        tokenService.saveToken(UserDto.id, tokens.refreshToken); //AWAIT
+        return { ...tokens, user: UserDto };
+      });
+    }
+    throw ApiError.UnathorizedError();
+  },
 };
 
 export default AuthService;
