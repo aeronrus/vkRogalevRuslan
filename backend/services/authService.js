@@ -1,5 +1,5 @@
 import { db } from '../connect.js';
-import bcrypt from 'bcryptjs'; //библиотека нужна нам для генерации хэша пароля
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { ApiError } from '../errorHandlers/api-error.js';
 import uuid from 'uuid';
@@ -13,7 +13,7 @@ const AuthService = {
 
     db.query(q, [username], (err, candidate) => {
       if (err) return res.status(500).json(err);
-      if (candidate.length) return console.log('User already exists!');
+      if (candidate.length) throw ApiError('User already exists!');
       const salt = bcrypt.genSaltSync(10);
       const hashedPassword = bcrypt.hashSync(password, salt);
       const activationLink = uuid.v4();

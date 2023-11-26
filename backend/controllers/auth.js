@@ -4,6 +4,23 @@ import jwt from 'jsonwebtoken';
 import { ApiError } from '../errorHandlers/api-error.js';
 import { AuthService } from '../services/authService.js';
 
+export const register = async (req, res) => {
+  try {
+    const { username, email, password, name } = req.body;
+    const data = await AuthService.registration(username, email, password, name);
+    return res
+      .cockie('refreshToken', data.refreshToken, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 10 * 24 * 60 * 60 * 1000,
+      })
+      .status(200)
+      .json('user has been created');
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const login = async (req, res) => {
   try {
     const q = 'SELECT * FROM users WHERE username = ?';
@@ -60,19 +77,6 @@ export const refresh = (req, res) => {
   });
 };
 
-export const register = async (req, res) => {
-  const { username, email, password, name } = req.body;
-  const data = await AuthService.registration(username, email, password, name);
-  return res
-    .cockie('refreshToken', data.refreshToken, {
-      httpOnly: true,
-      secure: true,
-      maxAge: 10 * 24 * 60 * 60 * 1000,
-    })
-    .status(200)
-    .json('user has been created');
-};
-
 export const logout = (req, res) => {
   try {
     res
@@ -88,7 +92,11 @@ export const logout = (req, res) => {
 };
 
 export const activate = async (req, res) => {
-  const activationLink = req.params.link;
-  await AuthService.ativate(activationLink);
-  return res.redirect(process.env.CLIENT_URL);
+  try {
+    const activationLink = req.params.link;
+    await AuthService.ativate(activationLink);
+    return res.redirect(process.env.CLIENT_URL);
+  } catch (error) {
+    next(error);
+  }
 };
