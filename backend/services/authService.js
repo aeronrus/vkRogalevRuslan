@@ -23,7 +23,7 @@ const AuthService = {
 
       db.query(q, [values], (err, user) => {
         if (err) console.log('500' + err);
-        console.log('User has been created.');
+        return user;
       });
     });
   },
