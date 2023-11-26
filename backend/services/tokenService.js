@@ -32,10 +32,10 @@ const tokenService = {
     });
   },
 
-  async removeToken(userId) {
+  async removeToken(refreshToken) {
     //возможно искать токен через refreshToken, а не через userId
-    const q = 'DELETE FROM tokens WHERE user = ? ';
-    db.query(q, userId, (err, data) => {
+    const q = 'DELETE FROM tokens WHERE refreshToken = ? ';
+    db.query(q, refreshToken, (err, data) => {
       if (err) console.log('500' + err);
       console.log('User has been created.');
     });

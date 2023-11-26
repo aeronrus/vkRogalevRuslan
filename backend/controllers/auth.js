@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'; //библиотека нужна нам для �
 import jwt from 'jsonwebtoken';
 import { ApiError } from '../errorHandlers/api-error.js';
 import { AuthService } from '../services/authService.js';
+import tokenService from '../services/tokenService.js';
 
 export const register = async (req, res) => {
   try {
@@ -23,64 +24,62 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const q = 'SELECT * FROM users WHERE username = ?';
-    await db.query(q, [req.body.username], (err, data) => {
-      if (err) return res.json(ApiError.ServerErrors('Ошибка с бд'));
-      if (data.length === 0)
-        return res.json(ApiError.UnathorizedError('Пользователь с таким именем не найден'));
-      const comparePassword = bcrypt.compareSync(req.body.password, data[0].password);
+    const { username, password } = req.body;
+    const user = await AuthService.login(username, password);
 
-      if (!comparePassword) return res.json(ApiError.UnathorizedError('Неверный логин или пароль'));
-
-      const accessToken = jwt.sign({ id: data[0].id }, 'access', { expiresIn: '1m' });
-      const refreshToken = jwt.sign({ id: data[0].id }, 'refresh', { expiresIn: '5m' });
-
-      const { password, ...others } = data[0];
-
-      const q2 = 'UPDATE users SET refreshToken = ? WHERE id = ?';
-      db.query(q2, [refreshToken, data[0].id], (err2, data2) => {
-        if (err2) return res.status(500).json(err2);
-        //console.log(result);
-      });
-
-      res
-        .cookie('accessToken', accessToken, { httpOnly: true })
-        .cookie(
-          'refreshToken',
-          refreshToken,
-          { maxAge: 6 * 24 * 60 * 60 * 1000 },
-          { httpOnly: true },
-        )
-        .status(200)
-        .json(others);
-    });
+    res
+      .cockie('refreshToken', user.refreshToken, {
+        secure: true,
+        httpOnly: true,
+        maxAge: 10 * 24 * 60 * 60 * 1000,
+      })
+      .status(200)
+      .json('you are authorizated');
   } catch (error) {
     next(error);
   }
 };
 
-export const refresh = (req, res) => {
-  const { refreshToken } = req.cookies;
+export const refresh = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    const userData = await AuthService.refresh(refreshToken);
 
-  if (!refreshToken) return res.status(401).json('Вы не авторизованы');
-  const q = 'SELECT * FROM user WHERE refreshToken = ?';
-  db.query(q, [refreshToken], (err, data) => {
-    if (err) return res.status(500).json('Ошибка на сервере');
+    if (!refreshToken) return res.status(401).json('Вы не авторизованы');
+    const q = 'SELECT * FROM user WHERE refreshToken = ?';
+    db.query(q, [refreshToken], (err, data) => {
+      if (err) return res.status(500).json('Ошибка на сервере');
 
-    if (data.length === 0) return res.status(401).json('Вы не авторизованы');
+      if (data.length === 0) return res.status(401).json('Вы не авторизованы');
 
-    jwt.verify(refreshToken, 'refreshSecret', (err, decoded) => {
-      if (err) return res.status(403).json('Invalid token');
-      const accessToken = jwt.sign({ id: decoded.id }, 'accessSecret', { expiresIn: '10m' });
-      res.cookie('accessToken', accessToken, { httpOnly: true }.status(200).json({ accessToken }));
+      jwt.verify(refreshToken, 'refreshSecret', (err, decoded) => {
+        if (err) return res.status(403).json('Invalid token');
+        const accessToken = jwt.sign({ id: decoded.id }, 'accessSecret', { expiresIn: '10m' });
+        res.cookie(
+          'accessToken',
+          accessToken,
+          { httpOnly: true }.status(200).json({ accessToken }),
+        );
+      });
     });
-  });
+    return res
+      .cockie('refreshToken', userData.refreshToken, {
+        httpOnly: true,
+        secure: true,
+      })
+      .status(200)
+      .json(userData);
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const logout = (req, res) => {
   try {
-    res
-      .clearCookie('accessToken', {
+    const refreshToken = req.cookies.refreshToken;
+    const token = AuthService.logout(refreshToken);
+    return res
+      .clearCookie('refreshToken', {
         secure: true,
         sameSite: 'none',
       })

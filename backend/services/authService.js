@@ -13,7 +13,7 @@ const AuthService = {
 
     db.query(q, [username], (err, candidate) => {
       if (err) return res.status(500).json(err);
-      if (candidate.length) throw ApiError('User already exists!');
+      if (candidate[0].length) throw ApiError('User already exists!'); //либо просто candidate
       const salt = bcrypt.genSaltSync(10);
       const hashedPassword = bcrypt.hashSync(password, salt);
       const activationLink = uuid.v4();
@@ -30,7 +30,7 @@ const AuthService = {
           email,
           `${process.env.API_URL}/api/activate/${activationLink}`,
         );
-        const UserDto = new userDto(user);
+        const UserDto = new userDto(user[0]);
         const tokens = tokenService.generateToken({ ...UserDto });
         await tokenService.saveToken(UserDto.id, tokens.refreshToken); //как сделать await
         return { ...tokens, user: UserDto };
@@ -42,6 +42,7 @@ const AuthService = {
     db.query(q, activationLink, (err, user) => {
       if (err) console.log('500 Ошибка бд: Поиск польователя по сылке ' + err);
       if (!user) {
+        //user[0]
         console.log('Пользователь передал неккоректную ссылку для активации');
       }
       const q = 'UPDATE users SET `refreshToken`=? WHERE activavationLink=?'; //можем ли мы искать не по id, а по другим полям
@@ -50,6 +51,29 @@ const AuthService = {
         if (err) console.log('500 Ошибка бд: Не смог добавить поле true у isActivated' + err);
       });
     });
+  },
+
+  async login(username, password) {
+    const q = 'SELECT * FROM users WHERE username = ?';
+    await db.query(q, username, (err, user) => {
+      if (err) throw ApiError.ServerErrors('Can`t find user in DataBase');
+      if (!user) {
+        throw ApiError.BadRequest('Uncorrect username or password');
+      }
+      const comparePassword = bcrypt.compareSync(password, user[0].password); //user[0]-данные о пользователе, мб везде указать data[0] и тд
+      if (!comparePassword) {
+        throw ApiError.BadRequest('Uncorrect username or password');
+      }
+      const UserDto = new userDto(user[0]);
+      const tokens = tokenService.generateToken({ ...UserDto });
+      tokenService.saveToken(UserDto.id, tokens.refreshToken);
+      return { ...tokens, user: UserDto };
+    });
+  },
+
+  async logout(refreshToken) {
+    const data = await tokenService.removeToken(refreshToken);
+    return data;
   },
 };
 
