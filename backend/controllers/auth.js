@@ -87,4 +87,8 @@ export const logout = (req, res) => {
   }
 };
 
-export const ativate = async (req, res) => {};
+export const activate = async (req, res) => {
+  const activationLink = req.params.link;
+  await AuthService.ativate(activationLink);
+  return res.redirect(process.env.CLIENT_URL);
+};
