@@ -1,4 +1,4 @@
-module.exports = class userDto {
+export class userDto {
   email;
   id;
   isActivated;
@@ -7,4 +7,4 @@ module.exports = class userDto {
     this.id = model._id; //ВОПРОС с подчеркиванием или нет(смотря что вернет sql)
     this.isActivated = model.isActivated;
   }
-};
+}

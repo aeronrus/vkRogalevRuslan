@@ -2,7 +2,7 @@ import { db } from '../connect.js';
 import bcrypt from 'bcryptjs'; //библиотека нужна нам для генерации хэша пароля
 import jwt from 'jsonwebtoken';
 import { ApiError } from '../errorHandlers/api-error.js';
-import { AuthService } from '../services/authService.js';
+import AuthService from '../services/authService.js';
 import tokenService from '../services/tokenService.js';
 
 export const register = async (req, res) => {

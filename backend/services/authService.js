@@ -2,8 +2,8 @@ import { db } from '../connect.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { ApiError } from '../errorHandlers/api-error.js';
-import uuid from 'uuid';
-import userDto from '../dtos/user-dto.js';
+import { v4 as uuid } from 'uuid';
+import { userDto } from '../dtos/user-dto.js';
 import tokenService from './tokenService.js';
 import 'dotenv/config';
 
