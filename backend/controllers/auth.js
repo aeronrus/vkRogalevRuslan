@@ -1,7 +1,6 @@
 import { db } from '../connect.js';
 import bcrypt from 'bcryptjs'; //библиотека нужна нам для генерации хэша пароля
 import jwt from 'jsonwebtoken';
-import { ApiError } from '../errorHandlers/api-error.js';
 import AuthService from '../services/authService.js';
 import tokenService from '../services/tokenService.js';
 
@@ -9,6 +8,7 @@ export const register = async (req, res) => {
   try {
     const { username, email, password, name } = req.body;
     const data = await AuthService.registration(username, email, password, name);
+    console.log('DATA ==== ' + JSON.stringify(data));
     return res
       .cockie('refreshToken', data.refreshToken, {
         httpOnly: true,
@@ -18,7 +18,7 @@ export const register = async (req, res) => {
       .status(200)
       .json('user has been created');
   } catch (error) {
-    next(error);
+    console.log(error);
   }
 };
 
@@ -36,7 +36,7 @@ export const login = async (req, res) => {
       .status(200)
       .json('you are authorizated');
   } catch (error) {
-    next(error);
+    console.log(error);
   }
 };
 
@@ -52,7 +52,7 @@ export const refresh = async (req, res) => {
       .status(200)
       .json(userData);
   } catch (error) {
-    next(error);
+    console.log(error);
   }
 };
 
@@ -68,7 +68,7 @@ export const logout = (req, res) => {
       .status(200)
       .json('User has been logged out');
   } catch (error) {
-    next(error);
+    console.log(error);
   }
 };
 
@@ -78,6 +78,6 @@ export const activate = async (req, res) => {
     await AuthService.ativate(activationLink);
     return res.redirect(process.env.CLIENT_URL);
   } catch (error) {
-    next(error);
+    console.log(error);
   }
 };

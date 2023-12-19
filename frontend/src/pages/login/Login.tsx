@@ -24,6 +24,7 @@ const Login: React.FC = () => {
 
   // в случе изменения(ввода данных) присваиваем каждому полю свое значение(е.target.value)
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    debugger;
     setLoginInput({ ...loginInput, [e.target.name]: e.target.value });
   };
 

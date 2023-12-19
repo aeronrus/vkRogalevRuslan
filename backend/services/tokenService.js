@@ -4,20 +4,26 @@ import { db } from '../connect.js';
 
 const tokenService = {
   async generateToken(payload) {
-    const accessToken = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '10m' });
-    const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: '10d' });
+    const accessToken =
+      payload !== undefined
+        ? jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '10m' })
+        : 'huita';
+    const refreshToken =
+      payload !== undefined
+        ? jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: '10d' })
+        : 'huita';
     return { accessToken, refreshToken };
   },
 
   async saveToken(userId, refreshToken) {
     const q = 'SELECT * FROM tokens WHERE user=?';
     db.query(q, userId, (err, tokenData) => {
-      if (tokenData) {
-        const q = 'UPDATE tokens SET `refreshToken`=? WHERE user=?'; //проверить правильность запроса
-
+      if (tokenData.length > 0) {
+        console.log('TOKEN DATA ====' + tokenData);
+        const q = 'UPDATE tokens SET refreshToken = ? WHERE user = ? '; //проверить правильность запроса
         const values = [refreshToken, userId];
         db.query(q, [values], (err, token) => {
-          if (err) console.log('500' + err);
+          if (err) console.log('500 TokenService error' + err);
           return token; //узнать что возращает
         });
       } else {

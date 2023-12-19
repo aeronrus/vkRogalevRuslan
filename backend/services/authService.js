@@ -1,39 +1,47 @@
 import { db } from '../connect.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { ApiError } from '../errorHandlers/api-error.js';
 import { v4 as uuid } from 'uuid';
 import { userDto } from '../dtos/user-dto.js';
 import tokenService from './tokenService.js';
 import 'dotenv/config';
+import ApiError from '../exceptions/api-error.js';
+import mailService from './mailService.js';
 
 const AuthService = {
   async registration(username, email, password, name) {
     const q = 'SELECT * FROM users WHERE username = ?';
 
-    db.query(q, [username], (err, candidate) => {
+    db.query(q, [username], async (err, candidate) => {
       if (err) return res.status(500).json(err);
-      if (candidate[0].length) throw ApiError('User already exists!'); //либо просто candidate
+      if (candidate[0]) throw new ApiError('User already exists!');
       const salt = bcrypt.genSaltSync(10);
       const hashedPassword = bcrypt.hashSync(password, salt);
-      const activationLink = uuid.v4();
+      const activationLink = uuid();
 
       const q =
-        'INSERT INTO users (`username`,`email`,`password`,`name`, `activationLink`) VALUE (?)';
-
+        'INSERT INTO users (username, email, password, name, activationLink) VALUES (?, ?, ?, ?, ?)';
       const values = [username, email, hashedPassword, name, activationLink];
 
-      db.query(q, [values], async (err, user) => {
-        //узнать что возвращает user, чтобы прокинуть его в userDto и получить объект с данными
-        if (err) console.log('500' + err);
-        await tokenService.sendActivationMail(
+      db.query(q, values, async (err, result) => {
+        if (err) console.log('500 ОШИБКА' + err);
+        mailService.sendActivaionMail(
           email,
           `${process.env.API_URL}/api/activate/${activationLink}`,
         );
-        const UserDto = new userDto(user[0]);
-        const tokens = tokenService.generateToken({ ...UserDto });
-        await tokenService.saveToken(UserDto.id, tokens.refreshToken); //как сделать await
-        return { ...tokens, user: UserDto };
+
+        const q = 'SELECT * FROM users WHERE id = ?';
+        db.query(q, result.insertId, async (err, user) => {
+          if (err) console.log('500 ОШИБКА' + err);
+
+          const UserDto = new userDto(user[0]);
+
+          const tokens = await tokenService.generateToken({ ...UserDto });
+          console.log('-------------------------------');
+
+          await tokenService.saveToken(UserDto.id, tokens.refreshToken);
+          return { ...tokens, user: UserDto };
+        });
       });
     });
   },
@@ -58,7 +66,7 @@ const AuthService = {
     await db.query(q, username, (err, user) => {
       if (err) throw ApiError.ServerErrors('Can`t find user in DataBase');
       if (!user) {
-        throw ApiError.BadRequest('Uncorrect username or password');
+        throw new ApiError.BadRequest('Uncorrect username or password');
       }
       const comparePassword = bcrypt.compareSync(password, user[0].password); //user[0]-данные о пользователе, мб везде указать data[0] и тд
       if (!comparePassword) {

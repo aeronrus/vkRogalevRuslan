@@ -1,11 +1,12 @@
 import 'dotenv/config';
+import nodemailer from 'nodemailer';
 
 class mailService {
   constructor() {
     this.transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST, //хост почтового сервера, с которго отправляем(воспользоваться gmail сервером)
       port: process.env.SMTP_PORT,
-      secure: false,
+      secure: true,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD,
@@ -27,4 +28,5 @@ class mailService {
     });
   }
 }
-module.exports = new mailService();
+
+export default new mailService();
