@@ -12,7 +12,7 @@ const AuthService = {
   async registration(username, email, password, name) {
     const q = 'SELECT * FROM users WHERE username = ?';
 
-    db.query(q, [username], async (err, candidate) => {
+    await db.query(q, [username], async (err, candidate) => {
       if (err) return res.status(500).json(err);
       if (candidate[0]) throw new ApiError('User already exists!');
       const salt = bcrypt.genSaltSync(10);
@@ -23,22 +23,24 @@ const AuthService = {
         'INSERT INTO users (username, email, password, name, activationLink) VALUES (?, ?, ?, ?, ?)';
       const values = [username, email, hashedPassword, name, activationLink];
 
-      db.query(q, values, async (err, result) => {
+      await db.query(q, values, async (err, result) => {
         if (err) console.log('500 ОШИБКА' + err);
         mailService.sendActivaionMail(
           email,
-          `${process.env.API_URL}/api/activate/${activationLink}`,
+          `${process.env.API_URL}/backend/auth/activate/${activationLink}`,
         );
 
         const q = 'SELECT * FROM users WHERE id = ?';
-        db.query(q, result.insertId, async (err, user) => {
+        await db.query(q, result.insertId, async (err, user) => {
           if (err) console.log('500 ОШИБКА' + err);
-
           const UserDto = new userDto(user[0]);
-
           const tokens = await tokenService.generateToken({ ...UserDto });
           console.log('-------------------------------');
-
+          const { refreshToken, accessToken } = tokens;
+          console.log(
+            'DATA in authService ==== ' +
+              JSON.stringify({ refreshToken, accessToken, user: UserDto }),
+          );
           await tokenService.saveToken(UserDto.id, tokens.refreshToken);
           return { ...tokens, user: UserDto };
         });
@@ -46,16 +48,15 @@ const AuthService = {
     });
   },
   async activate(activationLink) {
-    const q = 'SELECT * FROM users WHERE activavationLink = ?'; //какой корректный запрос
+    const q = 'SELECT * FROM users WHERE activationLink = ? '; //какой корректный запрос
     db.query(q, activationLink, (err, user) => {
       if (err) console.log('500 Ошибка бд: Поиск польователя по сылке ' + err);
-      if (!user) {
-        //user[0]
+      if (user.length === 0) {
         console.log('Пользователь передал неккоректную ссылку для активации');
       }
-      const q = 'UPDATE users SET `refreshToken`=? WHERE activavationLink=?'; //можем ли мы искать не по id, а по другим полям
+      const q = 'UPDATE users SET IsActivated = ? WHERE activationLink= ?'; //можем ли мы искать не по id, а по другим полям
       const values = [true, activationLink];
-      db.query(q, [values], (err, data) => {
+      db.query(q, values, (err, data) => {
         if (err) console.log('500 Ошибка бд: Не смог добавить поле true у isActivated' + err);
       });
     });

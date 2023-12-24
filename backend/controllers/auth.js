@@ -8,15 +8,15 @@ export const register = async (req, res) => {
   try {
     const { username, email, password, name } = req.body;
     const data = await AuthService.registration(username, email, password, name);
-    console.log('DATA ==== ' + JSON.stringify(data));
+    console.log('DATA in controller ==== ' + JSON.stringify(data));
     return res
-      .cockie('refreshToken', data.refreshToken, {
+      .cookie('refreshToken', JSON.parse(JSON.stringify(data)), {
         httpOnly: true,
         secure: true,
         maxAge: 10 * 24 * 60 * 60 * 1000,
       })
       .status(200)
-      .json('user has been created');
+      .json(data);
   } catch (error) {
     console.log(error);
   }
@@ -28,7 +28,7 @@ export const login = async (req, res) => {
     const user = await AuthService.login(username, password);
 
     res
-      .cockie('refreshToken', user.refreshToken, {
+      .cookie('refreshToken', user.refreshToken, {
         secure: true,
         httpOnly: true,
         maxAge: 10 * 24 * 60 * 60 * 1000,
@@ -45,7 +45,7 @@ export const refresh = async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
     const userData = await AuthService.refresh(refreshToken);
     return res
-      .cockie('refreshToken', userData.refreshToken, {
+      .cookie('refreshToken', userData.refreshToken, {
         httpOnly: true,
         secure: true,
       })
@@ -75,7 +75,7 @@ export const logout = (req, res) => {
 export const activate = async (req, res) => {
   try {
     const activationLink = req.params.link;
-    await AuthService.ativate(activationLink);
+    await AuthService.activate(activationLink);
     return res.redirect(process.env.CLIENT_URL);
   } catch (error) {
     console.log(error);

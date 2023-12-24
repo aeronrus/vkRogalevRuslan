@@ -22,7 +22,7 @@ const tokenService = {
         console.log('TOKEN DATA ====' + tokenData);
         const q = 'UPDATE tokens SET refreshToken = ? WHERE user = ? '; //проверить правильность запроса
         const values = [refreshToken, userId];
-        db.query(q, [values], (err, token) => {
+        db.query(q, values, (err, token) => {
           if (err) console.log('500 TokenService error' + err);
           return token; //узнать что возращает
         });
