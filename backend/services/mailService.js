@@ -15,22 +15,17 @@ class mailService {
   }
 
   async sendActivaionMail(to, link) {
-    try {
-      await this.transporter.sendMail({
-        from: process.env.SMTP_USER, //от кого письмо
-        to,
-        subject: 'Активация вашего аккаунта в сервисе' + process.env.API_URL, //тема письма
-        text: '',
-        html: ` 
-            <div>
-                 <h1>Для завершения регистрации перейдите по ссылке</h1>
-                <a href="${link}">${link}</a>
-            </div>
-          `,
-      });
-    } catch (error) {
-      console.log('Ошибка в mailService. Не могу отправить сообщение пользователю:   ' + error);
-    }
+    await this.transporter.sendMail({
+      from: process.env.SMTP_USER, //от кого письмо
+      to,
+      subject: 'Активация вашего аккаунта в сервисе' + process.env.API_URL, //тема письма
+      html: ` 
+          <div>
+               <h1>Для завершения регистрации перейдите по ссылке</h1>
+              <a href="${link}">${link}</a>
+          </div>
+        `,
+    });
   }
 }
 
