@@ -7,48 +7,59 @@ import tokenService from './tokenService.js';
 import 'dotenv/config';
 import ApiError from '../exceptions/api-error.js';
 import mailService from './mailService.js';
+import { PrismaClient } from '@prisma/client';
 
 const AuthService = {
   async registration(username, email, password, name) {
-    const q = 'SELECT * FROM users WHERE username = ?';
+    const prisma = new PrismaClient();
 
-    await db.query(q, [username], async (err, candidate) => {
-      if (err) return res.status(500).json(err);
-      if (candidate[0]) throw new ApiError('User already exists!');
+    const q = 'SELECT * FROM users WHERE username = ?';
+    try {
+      const candidate = await db.query(q, [username]);
+      console.log('candidate====' + candidate);
+      if (candidate[0]) {
+        throw new ApiError('User already exists!');
+      }
+
       const salt = bcrypt.genSaltSync(10);
       const hashedPassword = bcrypt.hashSync(password, salt);
       const activationLink = uuid();
 
-      const q =
+      const insertQuery =
         'INSERT INTO users (username, email, password, name, activationLink) VALUES (?, ?, ?, ?, ?)';
       const values = [username, email, hashedPassword, name, activationLink];
-
-      await db.query(q, values, async (err, result) => {
-        if (err) console.log('500 ОШИБКА' + err);
-        mailService.sendActivaionMail(
-          email,
-          `${process.env.API_URL}/backend/auth/activate/${activationLink}`,
-        );
-
-        const q = 'SELECT * FROM users WHERE id = ?';
-        await db.query(q, result.insertId, async (err, user) => {
-          if (err) console.log('500 ОШИБКА' + err);
-          const UserDto = new userDto(user[0]);
-          const tokens = await tokenService.generateToken({ ...UserDto });
-          console.log('-------------------------------');
-          const { refreshToken, accessToken } = tokens;
-          console.log(
-            'DATA in authService ==== ' +
-              JSON.stringify({ refreshToken, accessToken, user: UserDto }),
-          );
-          await tokenService.saveToken(UserDto.id, tokens.refreshToken);
-          return { ...tokens, user: UserDto };
-        });
+      const insertUser = await prisma.users.create({
+        data: {
+          username: username,
+          email: email,
+          password: hashedPassword,
+          name: name,
+          activationLink: activationLink,
+        },
       });
-    });
+
+      console.log('insertUser = = = ' + insertUser);
+
+      mailService.sendActivaionMail(
+        email,
+        ` ${process.env.API_URL}/backend/auth/activate/${activationLink}`,
+      );
+      const userQuery = 'SELECT * FROM users WHERE id = ?';
+      const user = await db.query(userQuery, username);
+      console.log('user = = = ' + JSON.stringify(user[0]));
+      const UserDto = new userDto(user[0]);
+      console.log('UserDTO = = = ' + UserDto);
+      const tokens = await tokenService.generateToken({ ...UserDto });
+      const { refreshToken, accessToken } = tokens;
+      await tokenService.saveToken(UserDto.id, tokens.refreshToken);
+      return { refreshToken, accessToken, user: UserDto };
+    } catch (err) {
+      console.error('500 ОШИБКА:  ' + err);
+      throw err;
+    }
   },
   async activate(activationLink) {
-    const q = 'SELECT * FROM users WHERE activationLink = ? '; //какой корректный запрос
+    const q = 'SELECT * FROM users WHERE activationLink = ?'; //какой корректный запрос
     db.query(q, activationLink, (err, user) => {
       if (err) console.log('500 Ошибка бд: Поиск польователя по сылке ' + err);
       if (user.length === 0) {

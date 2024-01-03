@@ -2,7 +2,6 @@ import { db } from '../connect.js';
 import bcrypt from 'bcryptjs'; //библиотека нужна нам для генерации хэша пароля
 import jwt from 'jsonwebtoken';
 import AuthService from '../services/authService.js';
-import tokenService from '../services/tokenService.js';
 
 export const register = async (req, res) => {
   try {
@@ -19,6 +18,7 @@ export const register = async (req, res) => {
       .json('user has been created');
   } catch (error) {
     console.log(error);
+    return res.json(error.status);
   }
 };
 
@@ -75,7 +75,7 @@ export const logout = (req, res) => {
 export const activate = async (req, res) => {
   try {
     const activationLink = req.params.link;
-    await AuthService.ativate(activationLink);
+    await AuthService.activate(activationLink);
     return res.redirect(process.env.CLIENT_URL);
   } catch (error) {
     console.log(error);
