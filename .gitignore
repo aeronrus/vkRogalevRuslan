@@ -18,6 +18,8 @@
 .env.test.local
 .env.production.local
 vk/backend/.env
+vk/backend/config.js
+
 
 
 npm-debug.log*
