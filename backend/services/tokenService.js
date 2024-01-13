@@ -5,13 +5,13 @@ import { db } from '../connect.js';
 const tokenService = {
   async generateToken(payload) {
     const accessToken =
-      payload !== undefined
+      payload !== undefined && payload.lengt > 0
         ? jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '10m' })
-        : 'huita';
+        : 'Ничего не пришло в tokenService.generateToken';
     const refreshToken =
-      payload !== undefined
+      payload !== undefined && payload.lengt > 0
         ? jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: '10d' })
-        : 'huita';
+        : 'Ничего не пришло в tokenService.generateToken';
     return { accessToken, refreshToken };
   },
 
