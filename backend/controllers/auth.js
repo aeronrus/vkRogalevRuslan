@@ -7,9 +7,9 @@ export const register = async (req, res) => {
   try {
     const { username, email, password, name } = req.body;
     const data = await AuthService.registration(username, email, password, name);
-    console.log('DATA ==== ' + JSON.stringify(data));
+    // console.log('DATA ==== ' + JSON.stringify(data));
     return res
-      .cockie('refreshToken', data.refreshToken, {
+      .cookie('refreshToken', data.refreshToken, {
         httpOnly: true,
         secure: true,
         maxAge: 10 * 24 * 60 * 60 * 1000,

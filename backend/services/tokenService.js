@@ -1,41 +1,54 @@
 import jwt from 'jsonwebtoken';
 import 'dotenv/config';
 import { db } from '../connect.js';
+import { PrismaClient } from '@prisma/client';
 
 const tokenService = {
   async generateToken(payload) {
     const accessToken =
-      payload !== undefined && payload.lengt > 0
+      payload !== undefined
         ? jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '10m' })
         : 'Ничего не пришло в tokenService.generateToken';
     const refreshToken =
-      payload !== undefined && payload.lengt > 0
+      payload !== undefined
         ? jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: '10d' })
         : 'Ничего не пришло в tokenService.generateToken';
     return { accessToken, refreshToken };
   },
 
   async saveToken(userId, refreshToken) {
-    const q = 'SELECT * FROM tokens WHERE user=?';
-    db.query(q, userId, (err, tokenData) => {
-      if (tokenData.length > 0) {
-        console.log('TOKEN DATA ====' + tokenData);
-        const q = 'UPDATE tokens SET refreshToken = ? WHERE user = ? '; //проверить правильность запроса
-        const values = [refreshToken, userId];
-        db.query(q, [values], (err, token) => {
-          if (err) console.log('500 TokenService error' + err);
-          return token; //узнать что возращает
+    const prisma = new PrismaClient();
+    try {
+      const tokenData = await prisma.tokens.findUnique({
+        where: {
+          userId: userId,
+        },
+      });
+      if (tokenData) {
+        console.log('TOKEN DATA ====', tokenData);
+        const token = await prisma.tokens.update({
+          where: {
+            userId: userId,
+          },
+          data: {
+            refreshToken: refreshToken,
+          },
         });
+        console.log('token===', token);
+        return token;
       } else {
-        const q = 'INSERT INTO tokens (`user`,`refreshToken`) VALUE (?)';
-
-        const values = [userId, refreshToken];
-        db.query(q, [values], (err, token) => {
-          if (err) console.log('500' + err);
-          return token; //узнать что возращает
+        const token = await prisma.tokens.create({
+          data: {
+            userId: userId,
+            refreshToken: refreshToken,
+          },
         });
+
+        return token; //узнать что возращает
       }
-    });
+    } catch (error) {
+      console.log(error);
+    }
   },
 
   async removeToken(refreshToken) {

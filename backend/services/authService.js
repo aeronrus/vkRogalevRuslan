@@ -13,11 +13,13 @@ const AuthService = {
   async registration(username, email, password, name) {
     const prisma = new PrismaClient();
 
-    const q = 'SELECT * FROM users WHERE username = ?';
     try {
-      const candidate = await db.query(q, [username]);
-      console.log('candidate====' + candidate);
-      if (candidate[0]) {
+      const candidate = await prisma.users.findMany({
+        where: {
+          username: username,
+        },
+      });
+      if (candidate.length > 0) {
         throw new ApiError('User already exists!');
       }
 
@@ -25,9 +27,6 @@ const AuthService = {
       const hashedPassword = bcrypt.hashSync(password, salt);
       const activationLink = uuid();
 
-      const insertQuery =
-        'INSERT INTO users (username, email, password, name, activationLink) VALUES (?, ?, ?, ?, ?)';
-      const values = [username, email, hashedPassword, name, activationLink];
       const insertUser = await prisma.users.create({
         data: {
           username: username,
@@ -35,24 +34,20 @@ const AuthService = {
           password: hashedPassword,
           name: name,
           activationLink: activationLink,
+          IsActivated: false,
         },
       });
-
-      console.log('insertUser = = = ' + insertUser);
 
       mailService.sendActivaionMail(
         email,
         ` ${process.env.API_URL}/backend/auth/activate/${activationLink}`,
       );
-      const userQuery = 'SELECT * FROM users WHERE id = ?';
-      const user = await db.query(userQuery, username);
-      console.log('user = = = ' + JSON.stringify(user[0]));
-      const UserDto = new userDto(user[0]);
-      console.log('UserDTO = = = ' + UserDto);
+
+      const UserDto = new userDto(insertUser);
       const tokens = await tokenService.generateToken({ ...UserDto });
-      const { refreshToken, accessToken } = tokens;
+
       await tokenService.saveToken(UserDto.id, tokens.refreshToken);
-      return { refreshToken, accessToken, user: UserDto };
+      return { ...tokens, user: UserDto };
     } catch (err) {
       console.error('500 ОШИБКА:  ' + err);
       throw err;
