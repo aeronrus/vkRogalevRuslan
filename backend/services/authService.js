@@ -8,11 +8,10 @@ import 'dotenv/config';
 import ApiError from '../exceptions/api-error.js';
 import mailService from './mailService.js';
 import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 const AuthService = {
   async registration(username, email, password, name) {
-    const prisma = new PrismaClient();
-
     try {
       const candidate = await prisma.users.findMany({
         where: {
@@ -69,21 +68,24 @@ const AuthService = {
   },
 
   async login(username, password) {
-    const q = 'SELECT * FROM users WHERE username = ?';
-    await db.query(q, username, (err, user) => {
-      if (err) throw ApiError.ServerErrors('Can`t find user in DataBase');
-      if (!user) {
-        throw new ApiError.BadRequest('Uncorrect username or password');
-      }
-      const comparePassword = bcrypt.compareSync(password, user[0].password); //user[0]-данные о пользователе, мб везде указать data[0] и тд
-      if (!comparePassword) {
-        throw ApiError.BadRequest('Uncorrect username or password');
-      }
-      const UserDto = new userDto(user[0]);
-      const tokens = tokenService.generateToken({ ...UserDto });
-      tokenService.saveToken(UserDto.id, tokens.refreshToken);
-      return { ...tokens, user: UserDto };
+    const searchUser = await prisma.users.findMany({
+      where: {
+        username: username,
+      },
     });
+    if (searchUser.length === 0) {
+      console.log('не нашел пользователя в бд');
+      throw ApiError.BadRequest('Uncorrect username or password');
+    }
+    const comparePassword = bcrypt.compareSync(password, searchUser[0].password);
+    if (!comparePassword) {
+      console.log('неверный пароль');
+      throw ApiError.BadRequest('Uncorrect username or password');
+    }
+    const UserDto = new userDto(searchUser[0]);
+    const tokens = await tokenService.generateToken({ ...UserDto });
+    await tokenService.saveToken(UserDto.id, tokens.refreshToken);
+    return { ...tokens, user: UserDto };
   },
 
   async logout(refreshToken) {

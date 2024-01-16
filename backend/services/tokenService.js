@@ -13,6 +13,7 @@ const tokenService = {
       payload !== undefined
         ? jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: '10d' })
         : 'Ничего не пришло в tokenService.generateToken';
+
     return { accessToken, refreshToken };
   },
 
@@ -25,7 +26,6 @@ const tokenService = {
         },
       });
       if (tokenData) {
-        console.log('TOKEN DATA ====', tokenData);
         const token = await prisma.tokens.update({
           where: {
             userId: userId,
@@ -34,7 +34,6 @@ const tokenService = {
             refreshToken: refreshToken,
           },
         });
-        console.log('token===', token);
         return token;
       } else {
         const token = await prisma.tokens.create({
@@ -44,7 +43,7 @@ const tokenService = {
           },
         });
 
-        return token; //узнать что возращает
+        return token;
       }
     } catch (error) {
       console.log(error);

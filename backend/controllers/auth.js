@@ -7,7 +7,6 @@ export const register = async (req, res) => {
   try {
     const { username, email, password, name } = req.body;
     const data = await AuthService.registration(username, email, password, name);
-    // console.log('DATA ==== ' + JSON.stringify(data));
     return res
       .cookie('refreshToken', data.refreshToken, {
         httpOnly: true,
@@ -18,7 +17,7 @@ export const register = async (req, res) => {
       .json('user has been created');
   } catch (error) {
     console.log(error);
-    return res.json(error.status);
+    return res.status(500).json('error: Internal Server Error');
   }
 };
 
@@ -26,9 +25,8 @@ export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
     const user = await AuthService.login(username, password);
-
     res
-      .cockie('refreshToken', user.refreshToken, {
+      .cookie('refreshToken', user.refreshToken, {
         secure: true,
         httpOnly: true,
         maxAge: 10 * 24 * 60 * 60 * 1000,
@@ -45,7 +43,7 @@ export const refresh = async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
     const userData = await AuthService.refresh(refreshToken);
     return res
-      .cockie('refreshToken', userData.refreshToken, {
+      .cookie('refreshToken', userData.refreshToken, {
         httpOnly: true,
         secure: true,
       })
@@ -53,6 +51,7 @@ export const refresh = async (req, res) => {
       .json(userData);
   } catch (error) {
     console.log(error);
+    return res.status(500).json('error: Internal Server Error');
   }
 };
 
@@ -69,6 +68,7 @@ export const logout = (req, res) => {
       .json('User has been logged out');
   } catch (error) {
     console.log(error);
+    return res.status(500).json('error: Internal Server Error');
   }
 };
 
@@ -79,5 +79,6 @@ export const activate = async (req, res) => {
     return res.redirect(process.env.CLIENT_URL);
   } catch (error) {
     console.log(error);
+    return res.status(500).json('error: Internal Server Error');
   }
 };
