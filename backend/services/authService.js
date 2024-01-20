@@ -53,18 +53,27 @@ const AuthService = {
     }
   },
   async activate(activationLink) {
-    const q = 'SELECT * FROM users WHERE activationLink = ?'; //какой корректный запрос
-    db.query(q, activationLink, (err, user) => {
-      if (err) console.log('500 Ошибка бд: Поиск польователя по сылке ' + err);
-      if (user.length === 0) {
-        console.log('Пользователь передал неккоректную ссылку для активации');
-      }
-      const q = 'UPDATE users SET IsActivated = ? WHERE activationLink= ?'; //можем ли мы искать не по id, а по другим полям
-      const values = [true, activationLink];
-      db.query(q, values, (err, data) => {
-        if (err) console.log('500 Ошибка бд: Не смог добавить поле true у isActivated' + err);
-      });
+    const searchUser = await prisma.users.findMany({
+      where: {
+        activationLink: activationLink,
+      },
     });
+    if (searchUser.length === 0) {
+      console.log('Пользователь передал неккоректную ссылку для активации');
+    }
+    const data = await prisma.users.update({
+      where: {
+        id: searchUser[0].id,
+      },
+      data: {
+        IsActivated: true,
+      },
+    });
+  },
+  async logout(refreshToken) {
+    const data = await tokenService.removeToken(refreshToken);
+    console.log('data in logout ===', data);
+    return data;
   },
 
   async login(username, password) {
@@ -86,11 +95,6 @@ const AuthService = {
     const tokens = await tokenService.generateToken({ ...UserDto });
     await tokenService.saveToken(UserDto.id, tokens.refreshToken);
     return { ...tokens, user: UserDto };
-  },
-
-  async logout(refreshToken) {
-    const data = await tokenService.removeToken(refreshToken);
-    return data;
   },
 
   async refresh(refreshToken) {
