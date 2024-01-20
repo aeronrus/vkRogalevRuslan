@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import 'dotenv/config';
 import { db } from '../connect.js';
 import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 const tokenService = {
   async generateToken(payload) {
@@ -18,7 +19,6 @@ const tokenService = {
   },
 
   async saveToken(userId, refreshToken) {
-    const prisma = new PrismaClient();
     try {
       const tokenData = await prisma.tokens.findUnique({
         where: {
@@ -51,12 +51,20 @@ const tokenService = {
   },
 
   async removeToken(refreshToken) {
-    //возможно искать токен через refreshToken, а не через userId
-    const q = 'DELETE FROM tokens WHERE refreshToken = ? ';
-    db.query(q, refreshToken, (err, data) => {
-      if (err) console.log('500' + err);
-      console.log('User has been created.');
-    });
+    try {
+      console.log('refreshToken in removeToken === ', refreshToken);
+      const data = await prisma.tokens.deleteMany({
+        where: {
+          refreshToken: refreshToken,
+        },
+      });
+      console.log('data in removeToken', data);
+
+      return data;
+    } catch (err) {
+      console.log('500' + err);
+      console.log(`Сouldn't delete the token`);
+    }
   },
   async validateAccessToken(accessToken) {
     try {
@@ -75,12 +83,13 @@ const tokenService = {
     }
   },
 
-  async findToken(token) {
-    const q = 'SELECT * FROM tokens WHERE refreshToken=?';
-
-    db.query(q, refreshToken, (err, findToken) => {
-      return findToken;
+  async findToken(refreshToken) {
+    const findToken = await prisma.tokens.findMany({
+      where: {
+        refreshToken: refreshToken,
+      },
     });
+    return findToken[0];
   },
 };
 

@@ -105,17 +105,18 @@ const AuthService = {
     const tokenFromDb = tokenService.findToken(refreshToken);
 
     if (userData && tokenFromDb) {
-      const q = 'SELECT * FROM user WHERE id = ?';
-      db.query(q, [tokenFromDb.id], (err, user) => {
-        if (err) throw ApiError.ServerErrors('Don`t find user by token in db');
-        //уточнить tokenFromDb или userData(тк в userData навряд ли содержится id)
-        if (user.length === 0) throw ApiError('Don`t find user with this token');
-
-        const UserDto = new userDto(user);
-        const tokens = tokenService.generateToken({ ...UserDto });
-        tokenService.saveToken(UserDto.id, tokens.refreshToken); //AWAIT
-        return { ...tokens, user: UserDto };
+      const searchUser = await prisma.users.findFirst({
+        where: {
+          id: userData.id,
+        },
       });
+
+      if (searchUser.length === 0) throw ApiError('Don`t find user with this token');
+
+      const UserDto = new userDto(searchUser);
+      const tokens = await tokenService.generateToken({ ...UserDto });
+      await tokenService.saveToken(UserDto.id, tokens.refreshToken);
+      return { ...tokens, user: UserDto };
     }
     throw ApiError.UnathorizedError();
   },
