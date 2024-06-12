@@ -1,10 +1,10 @@
-import ApiError from '../exceptions/api-error.js';
-
-const errorMiddleware = function (err, req, res, next) {
-  if (err instanceof ApiError) {
-    return res.status(err.status).json({ message: err.message, errors: err.errors });
-  }
-  return res.status(500).json({ message: 'Непредвиденная ошибка' });
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var api_error_1 = require("../exceptions/api-error");
+var errorMiddleware = function (err, req, res, next) {
+    if (err instanceof api_error_1.default) {
+        return res.status(err.status).json({ message: err.message, errors: err.errors });
+    }
+    return res.status(500).json({ message: 'Непредвиденная ошибка' });
 };
-
-export default errorMiddleware;
+exports.default = errorMiddleware;

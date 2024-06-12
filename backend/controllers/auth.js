@@ -1,5 +1,5 @@
 import { db } from '../connect.js';
-import bcrypt from 'bcryptjs'; //библиотека нужна нам для генерации хэша пароля
+import bcrypt from 'bcrypt-ts'; //библиотека нужна нам для генерации хэша пароля
 import jwt from 'jsonwebtoken';
 import AuthService from '../services/authService.js';
 
